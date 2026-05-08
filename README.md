@@ -1,4 +1,3 @@
-````markdown
 # Clinic Booking System
 
 A simple patient appointment booking system built with Python, Streamlit, SQLite, and Pandas.
@@ -9,12 +8,12 @@ A simple patient appointment booking system built with Python, Streamlit, SQLite
 
 ```bash
 pip install -r requirements.txt
-````
+```
 
 2. Add sample data:
 
 ```bash
-python add_sample_data.py
+python sample_data.py
 ```
 
 3. Run the app:
@@ -23,11 +22,7 @@ python add_sample_data.py
 streamlit run app.py
 ```
 
-4. Open the local Streamlit link shown in the terminal, usually:
-
-```bash
-http://localhost:8501
-```
+4. Open the local Streamlit link shown in the terminal
 
 ## What I Built
 
@@ -75,9 +70,9 @@ With more time, I would add:
 
 ## Project Structure
 
-```bash
+```
 ├── app.py
-├── add_sample_data.py
+├── sample_data.py
 ├── requirements.txt
 ├── bookings.db
 └── README.md
@@ -86,4 +81,4 @@ With more time, I would add:
 ## Technologies Used
 
 Python, Streamlit, SQLite, Pandas
-
+```

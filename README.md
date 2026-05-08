@@ -24,7 +24,7 @@ streamlit run app.py
 ```
 
 4. The app may open automatically in the browser. If not, copy the Local URL shown in the terminal and paste it into your browser.
-5. 
+   
 Note: The Streamlit app runs locally while the terminal command is active. If the browser shows a connection error, stop the app with Ctrl + C and run streamlit run app.py again.
 
 ## What I Built

@@ -74,7 +74,6 @@ With more time, I would add:
 ├── app.py
 ├── sample_data.py
 ├── requirements.txt
-├── bookings.db
 └── README.md
 ```
 

@@ -58,17 +58,10 @@ Cancelled bookings do not block appointment times, so those slots become availab
 
 ## What I Would Improve With More Time
 
-With more time, I would add:
-
 * Admin login
 * Email confirmations
-* Better email and phone validation
 * Separate schedules for each physician
 * Admin controls for adding or removing time slots
-* Search and filtering in the admin dashboard
-* Stronger double-booking protection
-* Unit tests
-* Deployment to a public URL
 * Calendar-style appointment selection
 
 ## Project Structure
@@ -77,6 +70,7 @@ With more time, I would add:
 ├── app.py
 ├── sample_data.py
 ├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 

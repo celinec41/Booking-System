@@ -30,12 +30,6 @@ TIME_SLOTS = [
 def apply_custom_style():
     """
     Apply custom CSS styling to the Streamlit app.
-    
-    Configures the app's visual appearance including:
-    - Background colors and gradients
-    - Card layouts and borders
-    - Button styles and hover effects
-    - Typography and spacing
     """
     st.markdown(
         """
@@ -256,19 +250,13 @@ def apply_custom_style():
 def get_connection():
     """
     Establish and return a connection to the SQLite database.
-    
-    Returns:
-        sqlite3.Connection: Database connection object.
     """
     return sqlite3.connect(DB_NAME)
 
 
 def initialize_database():
     """
-    Initialize the SQLite database and create the bookings table if it doesn't exist.
-    
-    Creates a 'bookings' table with columns for patient information, physician,
-    appointment time, reason for visit, booking status, and creation timestamp.
+    Initialize the SQLite database and create the bookings table if it does not exist.
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -296,13 +284,7 @@ def initialize_database():
 def get_booked_slots(physician):
     """
     Retrieve all booked appointment slots for a specific physician.
-    
-    Args:
-        physician (str): The name and specialty of the physician.
-    
-    Returns:
-        list: List of booked appointment times (strings) for the given physician,
-              excluding cancelled appointments.
+    Cancelled appointments do not block a time slot.
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -326,20 +308,29 @@ def get_booked_slots(physician):
 def create_booking(patient_name, patient_email, patient_phone, physician, appointment_time, reason):
     """
     Create a new appointment booking in the database.
-    
-    Args:
-        patient_name (str): Full name of the patient.
-        patient_email (str): Email address of the patient.
-        patient_phone (str): Phone number of the patient.
-        physician (str): Name and specialty of the physician.
-        appointment_time (str): Requested appointment time (YYYY-MM-DD HH:MM format).
-        reason (str): Reason for the appointment visit.
-    
-    The booking is created with status 'pending' and automatically timestamped
-    with the current creation time.
+
+    Returns:
+        bool: True if the booking was created, False if the slot was already booked.
     """
     conn = get_connection()
     cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id
+        FROM bookings
+        WHERE physician = ?
+        AND appointment_time = ?
+        AND status != 'cancelled'
+        """,
+        (physician, appointment_time),
+    )
+
+    existing_booking = cursor.fetchone()
+
+    if existing_booking:
+        conn.close()
+        return False
 
     cursor.execute(
         """
@@ -369,17 +360,12 @@ def create_booking(patient_name, patient_email, patient_phone, physician, appoin
 
     conn.commit()
     conn.close()
+    return True
 
 
 def get_all_bookings():
     """
     Retrieve all bookings from the database.
-    
-    Returns:
-        pd.DataFrame: DataFrame containing all booking records sorted by
-                      appointment time in ascending order. Columns include:
-                      id, patient_name, patient_email, patient_phone, physician,
-                      appointment_time, reason, status, and created_at.
     """
     conn = get_connection()
 
@@ -408,10 +394,6 @@ def get_all_bookings():
 def update_booking_status(booking_id, new_status):
     """
     Update the status of an existing booking.
-    
-    Args:
-        booking_id (int): The unique ID of the booking to update.
-        new_status (str): The new status value (e.g., 'pending', 'confirmed', 'cancelled').
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -432,13 +414,6 @@ def update_booking_status(booking_id, new_status):
 def patient_booking_page():
     """
     Render the patient-facing booking interface.
-    
-    Displays a three-step booking form allowing patients to:
-    1. Select a physician from the available list
-    2. Choose an available appointment time slot
-    3. Enter patient details (name, email, phone, reason for visit)
-    
-    On submission, creates a new booking with 'pending' status for clinic review.
     """
     st.markdown(
         """
@@ -455,13 +430,20 @@ def patient_booking_page():
     left_col, right_col = st.columns([1.2, 0.8])
 
     with left_col:
-        st.markdown('<div class="step-label"><span class="step-number">1</span> Select Your Doctor</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="step-label"><span class="step-number">1</span> Select Your Doctor</div>',
+            unsafe_allow_html=True,
+        )
+
         physician = st.selectbox("Doctor", PHYSICIANS, label_visibility="collapsed")
 
         booked_slots = get_booked_slots(physician)
         available_slots = [slot for slot in TIME_SLOTS if slot not in booked_slots]
 
-        st.markdown('<div class="step-label"><span class="step-number">2</span> Choose Your Time</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="step-label"><span class="step-number">2</span> Choose Your Time</div>',
+            unsafe_allow_html=True,
+        )
 
         if not available_slots:
             st.warning("No appointment times are currently available for this doctor.")
@@ -515,7 +497,7 @@ def patient_booking_page():
 
     st.markdown(
         '<div class="step-label" style="margin-top: 2rem;"><span class="step-number">3</span> Your Information</div>',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     with st.form("booking_form"):
@@ -528,17 +510,29 @@ def patient_booking_page():
         with col2:
             patient_phone = st.text_input("Phone number", placeholder="(555) 123-4567")
 
-        reason = st.text_area("Reason for visit", placeholder="Describe your symptoms or reason for visiting...", height=100)
+        reason = st.text_area(
+            "Reason for visit",
+            placeholder="Describe your symptoms or reason for visiting...",
+            height=100,
+        )
 
         col_submit, col_empty = st.columns([1, 4])
+
         with col_submit:
-            submitted = st.form_submit_button("Request Appointment", use_container_width=True)
+            submitted = st.form_submit_button(
+                "Request Appointment",
+                width="stretch",
+            )
 
         if submitted:
             if not patient_name or not patient_email or not patient_phone or not reason:
                 st.error("Please fill in all fields before submitting.")
+            elif "@" not in patient_email or "." not in patient_email:
+                st.error("Please enter a valid email address.")
+            elif len(patient_phone) < 7:
+                st.error("Please enter a valid phone number.")
             else:
-                create_booking(
+                booking_created = create_booking(
                     patient_name,
                     patient_email,
                     patient_phone,
@@ -547,18 +541,18 @@ def patient_booking_page():
                     reason,
                 )
 
-                st.success("Your appointment request has been submitted successfully!")
-                st.info("Check your email for confirmation and updates on your booking status.")
+                if booking_created:
+                    st.success("Your appointment request has been submitted successfully!")
+                    st.info("Check your email for confirmation and updates on your booking status.")
+                else:
+                    st.error(
+                        "Sorry, this appointment time was just booked. Please choose another available time."
+                    )
 
 
 def admin_dashboard_page():
     """
     Render the clinic admin dashboard interface.
-    
-    Displays:
-    - Booking metrics (total, pending, confirmed, cancelled)
-    - Table of all upcoming bookings with detailed information
-    - Controls to update booking statuses (pending -> confirmed or cancelled)
     """
     st.markdown(
         """
@@ -584,11 +578,11 @@ def admin_dashboard_page():
     cancelled_count = len(bookings[bookings["status"] == "cancelled"])
 
     st.markdown("### Quick Stats")
-    
+
     metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
 
     with metric_col1:
-        st.metric("Total Bookings", total_bookings, delta=None)
+        st.metric("Total Bookings", total_bookings)
 
     with metric_col2:
         st.metric("Pending", pending_count)
@@ -599,45 +593,89 @@ def admin_dashboard_page():
     with metric_col4:
         st.metric("Cancelled", cancelled_count)
 
+    st.markdown("### Filter Bookings")
+
+    filter_col1, filter_col2, filter_col3 = st.columns(3)
+
+    with filter_col1:
+        status_filter = st.selectbox(
+            "Filter by status",
+            ["All", "pending", "confirmed", "cancelled"],
+        )
+
+    with filter_col2:
+        physician_filter = st.selectbox(
+            "Filter by physician",
+            ["All"] + PHYSICIANS,
+        )
+
+    with filter_col3:
+        search_text = st.text_input(
+            "Search patient name",
+            placeholder="Enter patient name",
+        )
+
+    filtered_bookings = bookings.copy()
+
+    if status_filter != "All":
+        filtered_bookings = filtered_bookings[
+            filtered_bookings["status"] == status_filter
+        ]
+
+    if physician_filter != "All":
+        filtered_bookings = filtered_bookings[
+            filtered_bookings["physician"] == physician_filter
+        ]
+
+    if search_text:
+        filtered_bookings = filtered_bookings[
+            filtered_bookings["patient_name"].str.contains(
+                search_text,
+                case=False,
+                na=False,
+            )
+        ]
+
     st.markdown("### All Bookings")
 
-    display_bookings = bookings.rename(
-        columns={
-            "id": "ID",
-            "patient_name": "Patient",
-            "patient_email": "Email",
-            "patient_phone": "Phone",
-            "physician": "Doctor",
-            "appointment_time": "Appointment",
-            "reason": "Reason",
-            "status": "Status",
-            "created_at": "Submitted",
-        }
-    )
+    if filtered_bookings.empty:
+        st.info("No bookings match the selected filters.")
+    else:
+        display_bookings = filtered_bookings.rename(
+            columns={
+                "id": "ID",
+                "patient_name": "Patient",
+                "patient_email": "Email",
+                "patient_phone": "Phone",
+                "physician": "Doctor",
+                "appointment_time": "Appointment",
+                "reason": "Reason",
+                "status": "Status",
+                "created_at": "Submitted",
+            }
+        )
 
-    st.dataframe(display_bookings, use_container_width=True, hide_index=True)
+        st.dataframe(display_bookings, width="stretch", hide_index=True)
 
     st.markdown("### Update Booking Status")
-    
+
     col1, col2, col3 = st.columns([1.2, 1.2, 1])
 
     with col1:
         selected_booking_id = st.selectbox(
             "Select Booking ID",
             bookings["id"].tolist(),
-            label_visibility="collapsed",
         )
 
     with col2:
         new_status = st.selectbox(
             "New Status",
             ["pending", "confirmed", "cancelled"],
-            label_visibility="collapsed",
         )
 
     with col3:
         st.write("")
-        if st.button("Update Status", use_container_width=True):
+        if st.button("Update Status", width="stretch"):
             update_booking_status(selected_booking_id, new_status)
             st.success(f"Booking #{selected_booking_id} updated to '{new_status}'.")
             st.rerun()
@@ -646,11 +684,6 @@ def admin_dashboard_page():
 def main():
     """
     Main entry point for the Streamlit application.
-    
-    Initializes the database, applies styling, and renders the main interface
-    with two tabs:
-    - Patient Booking: For patients to request appointments
-    - Clinic Admin Dashboard: For staff to manage and update bookings
     """
     st.set_page_config(
         page_title="Clinic Booking System",

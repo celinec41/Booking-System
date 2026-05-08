@@ -39,21 +39,6 @@ For example:
 http://localhost:8501
 ```
 
-## Optional: Using a Virtual Environment
-
-If you want to keep the project dependencies separate, you can create a virtual environment first:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-On Windows, activate it with:
-
-```bash
-venv\Scripts\activate
-```
 
 ## What I Built
 

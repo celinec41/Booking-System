@@ -81,4 +81,3 @@ With more time, I would add:
 ## Technologies Used
 
 Python, Streamlit, SQLite, Pandas
-```

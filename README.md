@@ -11,33 +11,13 @@ git clone https://github.com/celinec41/Booking-System.git
 cd Booking-System
 ```
 
-2. Create a Python virtual environment:
-
-```bash
-python3 -m venv venv
-```
-
-3. Activate the virtual environment:
-
-On Mac/Linux:
-
-```bash
-source venv/bin/activate
-```
-
-On Windows:
-
-```bash
-venv\Scripts\activate
-```
-
-4. Install dependencies:
+2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-5. Add sample data:
+3. Add sample data:
 
 ```bash
 python sample_data.py
@@ -45,23 +25,35 @@ python sample_data.py
 
 Note: `sample_data.py` only needs to be run once. Running it multiple times may insert duplicate sample bookings.
 
-6. Run the app:
+4. Run the app:
 
 ```bash
 streamlit run app.py
 ```
 
-7. Open the app in your browser.
+5. Open the Local URL shown in the terminal.
 
-The app may open automatically. If not, copy the Local URL shown in the terminal and paste it into your browser.
+For example:
 
-Note: The Streamlit app runs locally while the terminal command is active. If the browser shows a connection error, stop the app with `Ctrl + C` and run:
-
-```bash
-streamlit run app.py
+```text
+http://localhost:8501
 ```
 
-again.
+## Optional: Using a Virtual Environment
+
+If you want to keep the project dependencies separate, you can create a virtual environment first:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+On Windows, activate it with:
+
+```bash
+venv\Scripts\activate
+```
 
 ## What I Built
 
@@ -104,8 +96,6 @@ I added basic validation so patients must enter required information before subm
 * Separate schedules for each physician
 * Admin controls for adding or removing time slots
 * Calendar-style appointment selection
-* Better UI styling
-* Search and filter options for admin bookings
 
 ## Project Structure
 
